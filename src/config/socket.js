@@ -14,7 +14,7 @@ const createSocketServer = (fastify) => {
             fastify.log.info(`Message: ${message}`);
         });
 
-        socket.on('disconnect', (socket) => {
+        socket.on('disconnect', () => {
             fastify.log.info(`User disconnected: ${socket.id}`);
         });
     });
