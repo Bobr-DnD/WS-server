@@ -1,13 +1,25 @@
+import { Server } from 'socket.io';
+
 const createSocketServer = (fastify) => {
-    fastify.server.on('connection', (socket) => {
+    const io = new Server(fastify.server, {
+        cors: {
+            origin: '*'
+        }
+    });
+    
+    io.on('connection', (socket) => {
         fastify.log.info(`User connected: ${socket.id}`);
+
+        socket.on('message', (message) => {
+            console.log(message);
+        });
 
         socket.on('disconnect', (socket) => {
             fastify.log.info(`User disconnected: ${socket.id}`);
         });
     });
 
-    return fastify;
+    return io;
 };
 
 export default createSocketServer;

@@ -1,8 +1,8 @@
-import fastify from 'fastify';
+import Fastify from 'fastify';
 import createSocketServer from './config/socket.js';
 import app from './app.js';
 
-const server = fastify({
+const fastify = Fastify({
     logger: {
         level: 'info',
         transport: {
@@ -17,15 +17,15 @@ const server = fastify({
     disableRequestLogging: true
 });
 
-await app(server);
+await app(fastify);
 
 const startServer = async () => {
     try {
-        await server.listen({ port: process.env.PORT || 3067 });
-        server.log.info(`Server started on port ${server.server.address().port}`);
-        createSocketServer(server);
+        await fastify.listen({ port: process.env.PORT || 3067 });
+        fastify.log.info(`Server started on port ${fastify.server.address().port}`);
+        createSocketServer(fastify);
     } catch (err) {
-        server.log.error(err);
+        fastify.log.error(err);
         process.exit(1);
     }
 };
