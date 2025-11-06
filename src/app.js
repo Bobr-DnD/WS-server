@@ -1,9 +1,13 @@
 import cors from '@fastify/cors';
+import fastifyIO from 'fastify-socket.io';
+import customLogger from './plugins/logger.js';
 
-export default async (fastify) => {
-    await fastify.register(cors(), { origin: '*' });
+export default async (server) => {
+    await server.register(customLogger);
+    await server.register(fastifyIO);
+    server.register(cors, { origin: '*' });
 
-    fastify.get('/', async () => {
+    server.get('/', async () => {
         return { message: 'WS server is running' };
     });
 };

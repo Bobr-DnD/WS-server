@@ -1,15 +1,13 @@
-import { Server } from 'socket.io';
-
-export const createSocketServer = (fastify) => {
-    const io = new Server(fastify.server);
-
-    io.on('connection', (socket) => {
+const createSocketServer = (fastify) => {
+    fastify.server.on('connection', (socket) => {
         fastify.log.info(`User connected: ${socket.id}`);
+
+        socket.on('disconnect', (socket) => {
+            fastify.log.info(`User disconnected: ${socket.id}`);
+        });
     });
 
-    io.on('disconnect', (socket) => {
-        fastify.log.info(`User disconnected: ${socket.id}`);
-    });
-
-    return io;
+    return fastify;
 };
+
+export default createSocketServer;
