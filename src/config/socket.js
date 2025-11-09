@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import registerRoomHandler from '../handlers/room.handler.js';
 
 const createSocketServer = (fastify) => {
     const io = new Server(fastify.server, {
@@ -13,6 +14,8 @@ const createSocketServer = (fastify) => {
         socket.on('message', (message) => {
             fastify.log.info(`Message: ${message}`);
         });
+        
+        registerRoomHandler(io, socket, fastify);
 
         socket.on('disconnect', () => {
             fastify.log.info(`User disconnected: ${socket.id}`);
