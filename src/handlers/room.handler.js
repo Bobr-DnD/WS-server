@@ -21,7 +21,11 @@ const registerRoomHandler = (io, socket) => {
             session: session.toJSON(),
         });
 
-        fastify.log.info(`${socket.id}: User joined session ${sessionId} (${sessionName}) as ${role}`);
+        fastify.log.info({
+            socketId: socket.id,
+            role: role,
+            sessionId: sessionId,
+        }, `User joined session ${sessionName}`);
     });
 
     socket.on('session:leave', (sessionId) => {
@@ -33,7 +37,10 @@ const registerRoomHandler = (io, socket) => {
             io.to(sessionId).emit('session:update', roomManager.get(sessionId).toJSON());
         }
 
-        fastify.log.info(`${socket.id}: User left session ${sessionId}`);        
+        fastify.log.info({
+            socketId: socket.id,
+            sessionId: sessionId,
+        }, 'User left session');        
     });
 
     socket.on('session:reconnect', async (sessionId, { role, characterId }) => {
@@ -63,7 +70,11 @@ const registerRoomHandler = (io, socket) => {
                 ? await getCharacterName(characterId)
                 : null;
 
-            fastify.log.info(`${socket.id}: User ${characterName ? `(${characterName}) ` : ''}reconnected to session ${sessionId} (${sessionName})`);
+            fastify.log.info({ 
+                socketId: socket.id,
+                sessionId: sessionId,
+                characterId: characterId,
+            }, `User ${characterName ? `(${characterName}) ` : ''}reconnected to session (${sessionName})`);
         }
     });
 
@@ -77,7 +88,9 @@ const registerRoomHandler = (io, socket) => {
             }
         });
 
-        fastify.log.info(`${socket.id}: User disconnected`);
+        fastify.log.info({
+            socketId: socket.id,
+        }, 'User disconnected');
     });
 };
 

@@ -13,7 +13,9 @@ class RoomManager {
     getOrCreate(roomId) {
         if (!this.rooms.has(roomId)) {
             this.rooms.set(roomId, new Room(roomId));
-            fastifyInstance.server.log.info(`Room with session ${roomId} has been created`);
+            fastifyInstance.server.log.info({
+                roomId: roomId,
+            }, 'Room with session has been created');
         }
         return this.rooms.get(roomId);
     }
@@ -77,7 +79,9 @@ class RoomManager {
 
     deleteRoom(roomId) {
         this.rooms.delete(roomId);
-        fastifyInstance.server.log.info(`Room with session ${roomId} has been deleted`);
+        fastifyInstance.server.log.info({ 
+            roomId: roomId,
+        }, 'Room with session has been deleted');
     }
 
     getRooms() {
