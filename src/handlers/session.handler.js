@@ -81,12 +81,25 @@ const registerSessionHandler = (io, socket) => {
             socket.emit('error', { message: `User with id ${socket.id} is not in session ${sessionId}` });
             return;
         }
+
+        let sessionName = null;
+
+        try {
+            sessionName = await getSessionName(sessionId);
+        } catch (error) {
+            socketErrorHandler(socket, error);
+            return;
+        }
+
+        if (session.get(socket.id).role !== 'admin') {
+            socket.emit('error', { message: `User with id ${socket.id} is not admin in session ${sessionId} (${sessionName})` });
+            return;
+        }
         
         try {
             const newMove = await updateSessionMove(sessionId, moveValue);
             io.to(sessionId).emit('session:update', { move: newMove });
 
-            const sessionName = await getSessionName(sessionId);
             fastify.log.info(`Admin change move to ${newMove} in session ${sessionId} (${sessionName})`);
         } catch (error) {
             socketErrorHandler(socket, error);
