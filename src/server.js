@@ -1,21 +1,8 @@
-import Fastify from 'fastify';
 import createSocketServer from './config/socket.js';
 import app from './app.js';
+import fastifyInstance from './core/fastify.instance.js';
 
-const fastify = Fastify({
-    logger: {
-        level: 'info',
-        transport: {
-            target: 'pino-pretty',
-            options: {
-                colorize: true,
-                translateTime: 'SYS:yyyy-mm-dd HH:MM:ss Z',
-                ignore: 'pid,hostname,reqId,req,res,err,responseTime'
-            }
-        }
-    },
-    disableRequestLogging: true
-});
+const fastify = fastifyInstance.server;
 
 await app(fastify);
 
