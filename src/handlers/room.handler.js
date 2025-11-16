@@ -29,7 +29,7 @@ const registerRoomHandler = (io, socket) => {
 
         socket.leave(sessionId);
         
-        if (session && session.members.lenght) {
+        if (session && session.members.length) {
             io.to(sessionId).emit('session:update', roomManager.get(sessionId).toJSON());
         }
 
@@ -72,7 +72,7 @@ const registerRoomHandler = (io, socket) => {
 
         sessionIds.forEach((sessionId) => {
             const session = roomManager.get(sessionId);
-            if (session && session.members.lenght) {
+            if (session && session.members.length) {
                 io.to(sessionId).emit('session:update', session.toJSON());
             }
         });

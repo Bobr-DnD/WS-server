@@ -1,3 +1,5 @@
+import { roomManager } from './room.manager.js';
+
 class Room {
     constructor(id) {
         this.id = id;
@@ -11,6 +13,9 @@ class Room {
 
     removeMember(socketId) {
         const deleted = this.members.delete(socketId);
+        if (this.size === 0) {
+            roomManager.deleteRoom(this.id);
+        }
         if (deleted) return this;
 
         return null;
