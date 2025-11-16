@@ -32,7 +32,11 @@ const registerSessionHandler = (io, socket) => {
                         : null;
 
                     const sessionName = await getSessionName(sessionId);
-                    fastify.log.info(`${socket.id}: User pick character ${characterName ? `(${characterName})` : 'unknown character'} in session ${sessionId} (${sessionName})`);
+                    fastify.log.info({
+                        socketId: socket.id,
+                        sessionId: sessionId,
+                        characterId: characterId,
+                    }, `User pick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName})`);
                 }
             }
         } catch (error) {
@@ -53,7 +57,7 @@ const registerSessionHandler = (io, socket) => {
         }
 
         try {
-            const characterId = roomManager.getCharacterBySocketId(socket.id);
+            const characterId = roomManager.getCharacterBySocketId(socket.id, sessionId);
             const session = roomManager.disconnectCharacterFromMember(socket.id, sessionId);
             if (session) {
                 io.to(sessionId).emit('session:update', session.toJSON());
@@ -64,7 +68,11 @@ const registerSessionHandler = (io, socket) => {
                 : null;
 
             const sessionName = await getSessionName(sessionId);
-            fastify.log.info(`${socket.id}: User unpick character ${characterName ? `(${characterName})` : 'unknown character'} in session ${sessionId} (${sessionName})`);
+            fastify.log.info({
+                socketId: socket.id,
+                sessionId: sessionId,
+                characterId: characterId,
+            }, `User unpick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName})`);
         } catch (error) {
             socketErrorHandler(socket, error);
         }
@@ -100,7 +108,10 @@ const registerSessionHandler = (io, socket) => {
             const newMove = await updateSessionMove(sessionId, moveValue);
             io.to(sessionId).emit('session:update', { move: newMove });
 
-            fastify.log.info(`Admin change move to ${newMove} in session ${sessionId} (${sessionName})`);
+            fastify.log.info({
+                socketId: socket.id,
+                sessionId: sessionId,
+            }, `Admin change move to ${newMove} in session (${sessionName})`);
         } catch (error) {
             socketErrorHandler(socket, error);
         }

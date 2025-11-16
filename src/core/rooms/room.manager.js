@@ -1,4 +1,5 @@
 import Room from './room.entity.js';
+import fastifyInstance from '../fastify.instance.js';
 
 class RoomManager {
     constructor() {
@@ -12,6 +13,9 @@ class RoomManager {
     getOrCreate(roomId) {
         if (!this.rooms.has(roomId)) {
             this.rooms.set(roomId, new Room(roomId));
+            fastifyInstance.server.log.info({
+                roomId: roomId,
+            }, 'Room with session has been created');
         }
         return this.rooms.get(roomId);
     }
@@ -26,7 +30,6 @@ class RoomManager {
         const room = this.get(roomId);
         if (room) {
             room.removeMember(socketId);
-            if (room.size === 0) this.rooms.delete(roomId);
 
             return room;
         }
@@ -42,7 +45,6 @@ class RoomManager {
             if (room) {
                 roomIds.push(room.id);
             }
-            if (room.size === 0) this.rooms.delete(room.id);
         });
 
         return roomIds;
@@ -73,6 +75,13 @@ class RoomManager {
         }
 
         return null;
+    }
+
+    deleteRoom(roomId) {
+        this.rooms.delete(roomId);
+        fastifyInstance.server.log.info({ 
+            roomId: roomId,
+        }, 'Room with session has been deleted');
     }
 
     getRooms() {
