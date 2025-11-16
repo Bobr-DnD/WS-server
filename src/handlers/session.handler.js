@@ -1,8 +1,12 @@
 import { socketErrorHandler } from '../config/socketErrorHandler.js';
-import { getSessionCharacters, updateSessionMove } from '../service/session.service.js';
+import { getSessionCharacters, getSessionName, updateSessionMove } from '../service/session.service.js';
 import { roomManager } from '../core/rooms/room.manager.js';
+import { getCharacterName } from '../service/character.service.js';
+import fastifyInstance from '../core/fastify.instance.js';
 
 const registerSessionHandler = (io, socket) => {
+    const fastify = fastifyInstance.server;
+
     socket.on('session:connectCharacter', async (sessionId, { characterId }) => {
         const session = roomManager.get(sessionId);
         if (!session) {
@@ -22,6 +26,13 @@ const registerSessionHandler = (io, socket) => {
                 const session = roomManager.connectCharacterToMember(socket.id, sessionId, characterId);
                 if (session) {
                     io.to(sessionId).emit('session:update', session.toJSON());
+
+                    const characterName = characterId
+                        ? await getCharacterName(characterId)
+                        : null;
+
+                    const sessionName = await getSessionName(sessionId);
+                    fastify.log.info(`${socket.id}: User pick character ${characterName ? `(${characterName})` : 'unknown character'} in session ${sessionId} (${sessionName})`);
                 }
             }
         } catch (error) {
@@ -42,10 +53,18 @@ const registerSessionHandler = (io, socket) => {
         }
 
         try {
+            const characterId = roomManager.getCharacterBySocketId(socket.id);
             const session = roomManager.disconnectCharacterFromMember(socket.id, sessionId);
             if (session) {
                 io.to(sessionId).emit('session:update', session.toJSON());
             }
+
+            const characterName = characterId
+                ? await getCharacterName(characterId)
+                : null;
+
+            const sessionName = await getSessionName(sessionId);
+            fastify.log.info(`${socket.id}: User unpick character ${characterName ? `(${characterName})` : 'unknown character'} in session ${sessionId} (${sessionName})`);
         } catch (error) {
             socketErrorHandler(socket, error);
         }
@@ -66,6 +85,9 @@ const registerSessionHandler = (io, socket) => {
         try {
             const newMove = await updateSessionMove(sessionId, moveValue);
             io.to(sessionId).emit('session:update', { move: newMove });
+
+            const sessionName = await getSessionName(sessionId);
+            fastify.log.info(`Admin change move to ${newMove} in session ${sessionId} (${sessionName})`);
         } catch (error) {
             socketErrorHandler(socket, error);
         }
