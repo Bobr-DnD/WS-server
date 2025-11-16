@@ -21,6 +21,10 @@ const registerRoomHandler = (io, socket) => {
             session: session.toJSON(),
         });
 
+        socket.emit('session:join', {
+            session: session.toJSON(),
+        });
+
         fastify.log.info({
             socketId: socket.id,
             role: role,
