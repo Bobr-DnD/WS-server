@@ -1,6 +1,14 @@
 import Session from '../schemas/session.schema.js';
 import { DatabaseError } from '../utils/errors.js';
 
+export const getSessionMove = async (sessionId) => {
+    const session = await Session.findById(sessionId);
+    if (!session) {
+        throw new DatabaseError('Session not found');
+    }
+    return session.move;
+};
+
 export const updateSessionMove = async (sessionId, moveValue) => {
     const session = await Session.findById(sessionId);
     if (!session) {

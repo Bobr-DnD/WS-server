@@ -3,7 +3,7 @@ import { getSessionCharacters, updateSessionMove } from '../service/session.serv
 import { roomManager } from '../core/rooms/room.manager.js';
 
 const registerSessionHandler = (io, socket) => {
-    socket.on('session:connectCharacter', async (sessionId, characterId) => {
+    socket.on('session:connectCharacter', async (sessionId, { characterId }) => {
         const session = roomManager.get(sessionId);
         if (!session) {
             socket.emit('error', { message: `Session with id ${sessionId} not found` });
@@ -51,7 +51,7 @@ const registerSessionHandler = (io, socket) => {
         }
     });
 
-    socket.on('session:changeMove', async (sessionId, moveValue) => {
+    socket.on('session:changeMove', async (sessionId, { moveValue }) => {
         const session = roomManager.get(sessionId);
         if (!session) {
             socket.emit('error', { message: `Session with id ${sessionId} not found` });
