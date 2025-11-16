@@ -21,19 +21,19 @@ const registerRoomHandler = (io, socket) => {
             session: session.toJSON(),
         });
 
-        fastify.log.info(`${socket.id}: User joined session ${sessionId} (${sessionName})`);
+        fastify.log.info(`${socket.id}: User joined session ${sessionId} (${sessionName}) as ${role}`);
     });
 
     socket.on('session:leave', (sessionId) => {
         const session = roomManager.leave(socket.id, sessionId);
 
         socket.leave(sessionId);
-
-        if (session) {
+        
+        if (session && session.members.lenght) {
             io.to(sessionId).emit('session:update', roomManager.get(sessionId).toJSON());
         }
 
-        fastify.log.info(`${socket.id}: User left session ${sessionId}`);
+        fastify.log.info(`${socket.id}: User left session ${sessionId}`);        
     });
 
     socket.on('session:reconnect', async (sessionId, { role, characterId }) => {
@@ -72,7 +72,7 @@ const registerRoomHandler = (io, socket) => {
 
         sessionIds.forEach((sessionId) => {
             const session = roomManager.get(sessionId);
-            if (session) {
+            if (session && session.members.lenght) {
                 io.to(sessionId).emit('session:update', session.toJSON());
             }
         });

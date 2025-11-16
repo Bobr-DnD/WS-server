@@ -6,5 +6,5 @@ export const getCharacterName = async (characterId) => {
     if (!characterName) {
         throw new DatabaseError('Character not found');
     }
-    return characterName;
+    return characterName.name;
 };

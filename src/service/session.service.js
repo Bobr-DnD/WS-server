@@ -33,5 +33,5 @@ export const getSessionName = async (sessionId) => {
     if (!sessionName) {
         throw new DatabaseError('Session not found');
     }
-    return sessionName;
+    return sessionName.name;
 };
