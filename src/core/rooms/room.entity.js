@@ -9,7 +9,17 @@ class Room {
     }
 
     removeMember(socketId) {
-        this.members.delete(socketId);
+        const hasMember = this.members.has(socketId);
+        if (hasMember) {
+            this.members.delete(socketId);
+            return this.id;
+        }
+
+        return null;
+    }
+
+    hasMember(socketId) {
+        return this.members.has(socketId);
     }
 
     get size() {

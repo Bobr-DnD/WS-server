@@ -5,6 +5,10 @@ class RoomManager {
         this.rooms = new Map();
     }
 
+    get(roomId) {
+        return this.rooms.get(roomId);
+    }
+
     getOrCreate(roomId) {
         if (!this.rooms.has(roomId)) {
             this.rooms.set(roomId, new Room(roomId));
@@ -19,17 +23,28 @@ class RoomManager {
     }
 
     leave(socketId, roomId) {
-        const room = this.rooms.get(roomId);
+        const room = this.get(roomId);
         if (room) {
             room.removeMember(socketId);
             if (room.size === 0) this.rooms.delete(roomId);
+
+            return room;
         }
+
+        return null;
     }
 
     leaveAll(socketId) {
+        const roomIds = [];
+
         this.rooms.forEach((room) => {
-            room.removeMember(socketId);
+            const roomId = room.removeMember(socketId);
+            if (roomId) {
+                roomIds.push(roomId);
+            }
         });
+
+        return roomIds;
     }
 
     getRooms() {

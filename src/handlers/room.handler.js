@@ -5,20 +5,34 @@ const registerRoomHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
 
     socket.on('session:join', (sessionId) => {
-        const room = roomManager.join(socket.id, sessionId);
+        const session = roomManager.join(socket.id, sessionId);
+
         socket.join(sessionId);
+
+        io.to(sessionId).emit('session:update', session.toJSON());
+
         fastify.log.info(`User ${socket.id} joined session ${sessionId}`);
-        io.to(sessionId).emit('session:update', room.toJSON());
     });
 
     socket.on('session:leave', (sessionId) => {
-        roomManager.leave(socket.id, sessionId);
-        socket.join(sessionId);
+        const session = roomManager.leave(socket.id, sessionId);
+
+        socket.leave(sessionId);
+
+        if (session) {
+            io.to(sessionId).emit('session:update', roomManager.get(sessionId).toJSON());
+        }
+
         fastify.log.info(`User ${socket.id} left session ${sessionId}`);
     });
 
     socket.on('disconnect', () => {
-        roomManager.leaveAll(socket.id);
+        const sessionIds = roomManager.leaveAll(socket.id);
+
+        sessionIds.forEach((sessionId) => {
+            io.to(sessionId).emit('session:update', roomManager.get(sessionId).toJSON());
+        });
+
         fastify.log.info(`User ${socket.id} disconnected`);
     });
 };

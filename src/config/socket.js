@@ -15,11 +15,8 @@ const createSocketServer = () => {
     io.on('connection', (socket) => {
         fastify.log.info(`User connected: ${socket.id}`);
 
-        socket.on('message', (message) => {
-            fastify.log.info(`Message: ${message}`);
-        });
-        
-        registerRoomHandler(io, socket, fastify);
+        registerRoomHandler(io, socket);
+        registerSessionHandler(io, socket);
 
         socket.on('disconnect', () => {
             fastify.log.info(`User disconnected: ${socket.id}`);
@@ -28,5 +25,7 @@ const createSocketServer = () => {
 
     return io;
 };
+
+
 
 export default createSocketServer;
