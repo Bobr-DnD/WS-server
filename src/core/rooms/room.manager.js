@@ -37,11 +37,12 @@ class RoomManager {
     leaveAll(socketId) {
         const roomIds = [];
 
-        this.rooms.forEach((room) => {
-            const roomId = room.removeMember(socketId);
-            if (roomId) {
-                roomIds.push(roomId);
+        this.rooms.forEach((r) => {
+            const room = r.removeMember(socketId);
+            if (room) {
+                roomIds.push(room.id);
             }
+            if (room.size === 0) this.rooms.delete(room.id);
         });
 
         return roomIds;

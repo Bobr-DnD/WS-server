@@ -12,7 +12,7 @@ class Room {
         const hasMember = this.members.has(socketId);
         if (hasMember) {
             this.members.delete(socketId);
-            return this.id;
+            return this;
         }
 
         return null;
