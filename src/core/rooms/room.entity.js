@@ -9,11 +9,8 @@ class Room {
     }
 
     removeMember(socketId) {
-        const hasMember = this.members.has(socketId);
-        if (hasMember) {
-            this.members.delete(socketId);
-            return this;
-        }
+        const deleted = this.members.delete(socketId);
+        if (deleted) return this;
 
         return null;
     }
