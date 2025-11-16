@@ -4,8 +4,8 @@ import fastifyInstance from '../core/fastify.instance.js';
 const registerRoomHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
 
-    socket.on('session:join', (sessionId) => {
-        const session = roomManager.join(socket.id, sessionId);
+    socket.on('session:join', (sessionId, role) => {
+        const session = roomManager.join(socket.id, sessionId, role);
 
         socket.join(sessionId);
 

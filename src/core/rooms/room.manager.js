@@ -16,9 +16,9 @@ class RoomManager {
         return this.rooms.get(roomId);
     }
 
-    join(socketId, roomId) {
+    join(socketId, roomId, role) {
         const room = this.getOrCreate(roomId);
-        room.addMember(socketId);
+        room.addMember(socketId, role);
         return room;
     }
 
@@ -46,6 +46,33 @@ class RoomManager {
         });
 
         return roomIds;
+    }
+
+    connectCharacterToMember(socketId, roomId, userId) {
+        const room = this.get(roomId);
+        if (room) {
+            return room.connectCharacterToMember(socketId, userId);
+        }
+
+        return null;
+    }
+
+    disconnectCharacterFromMember(socketId, roomId) {
+        const room = this.get(roomId);
+        if (room) {
+            return room.disconnectCharacterFromMember(socketId);
+        }
+
+        return null;
+    }
+
+    getCharacterBySocketId(socketId, roomId) {
+        const room = this.get(roomId);
+        if (room) {
+            return room.getCharacterBySocketId(socketId);
+        }
+
+        return null;
     }
 
     getRooms() {

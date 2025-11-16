@@ -4,8 +4,8 @@ class Room {
         this.members = new Map();
     }
 
-    addMember(socketId) {
-        this.members.set(socketId, {});
+    addMember(socketId, role) {
+        this.members.set(socketId, { role: role || 'user' });
         return this;
     }
 
@@ -20,26 +20,32 @@ class Room {
         return this.members.has(socketId);
     }
 
-    connectMemberToUser(socketId, userId) {
-        this.members.get(socketId).userId = userId;
-        return this;
-    }
-
-    disconnectMemberFromUser(socketId) {
-        this.members.get(socketId).userId = null;
-        return this;
-    }
-
-    getUserBySocketId(socketId) {
-        return this.members.get(socketId).userId;
-    }
-
-    getSocketByUserId(userId) {
-        for (const [socketId, member] of this.members) {
-            if (member.userId === userId) {
-                return socketId;
-            }
+    connectCharacterToMember(socketId, userId) {
+        const member = this.members.get(socketId);
+        if (member) {
+            member.userId = userId;
+            return this;
         }
+
+        return null;
+    }
+
+    disconnectCharacterFromMember(socketId) {
+        const member = this.members.get(socketId);
+        if (member) {
+            member.userId = null;
+            return this;
+        }
+
+        return null;
+    }
+
+    getCharacterBySocketId(socketId) {
+        const member = this.members.get(socketId);
+        if (member) {
+            return member.userId;
+        }
+
         return null;
     }
 
