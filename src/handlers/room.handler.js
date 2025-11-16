@@ -30,7 +30,10 @@ const registerRoomHandler = (io, socket) => {
         const sessionIds = roomManager.leaveAll(socket.id);
 
         sessionIds.forEach((sessionId) => {
-            io.to(sessionId).emit('session:update', roomManager.get(sessionId).toJSON());
+            const session = roomManager.get(sessionId);
+            if (session) {
+                io.to(sessionId).emit('session:update', session.toJSON());
+            }
         });
 
         fastify.log.info(`User ${socket.id} disconnected`);
