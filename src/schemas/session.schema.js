@@ -1,4 +1,4 @@
-import mongoose, { mongo } from 'mongoose';
+import mongoose from "mongoose";
 
 const sessionSchema = new mongoose.Schema({
     name: {
@@ -6,69 +6,87 @@ const sessionSchema = new mongoose.Schema({
         required: [true, 'Session should have a name'],
         trim: true
     },
-    image:{
+    image: {
         type: String,
-        trim: true
-    },
-    currency: {
-        type: Object,
+        trim: true,
         default: null
     },
-    move: {
-        type: Number,
-        default: 0
-    },
+    //TODO probably move is not important field
+    // move: {
+    //     type: Number,
+    //     default: 0
+    // },
     customFields: {
         type: Object,
+        default: {}
+    },
+    notes: {
+        type: String,
         default: null
     },
-    adminNotes:{
-        type: Array,
-        default: null
+    entityTypes: {
+        type: [Object],
+        default: [],
+        id: String,
+        icon: String,
+        name: String
+    },
+    currencyTypes: {
+        type: [Object],
+        default: [],
+        id: String,
+        name: String,
+        icon: String
+    },
+    characteristicsList: {
+        type: [Object],
+        default: [],
+        id: String,
+        name: String
+    },
+    questTypes: {
+        type: [Object],
+        default: [],
+        id: String,
+        name: String
+    },
+    perkTypes:{
+        type: [Object],
+        default: [],
+        id: String,
+        name: String,
+        color: String
+    },
+    enemyTypes: {
+        type: [Object],
+        default: [],
+        id: String,
+        name: String,
+        icon: String
     },
     characters: {
         type: [mongoose.Schema.ObjectId],
         ref: 'Character',
         default: []
     },
-    armors:{
+    entities: {
         type: [mongoose.Schema.ObjectId],
-        ref: 'Armor',
+        ref: 'Entity',
         default: []
     },
-    enemies:{
+    enemies: {
         type: [mongoose.Schema.ObjectId],
         ref: 'Enemy',
         default: []
     },
-    inventories:{
-        type: [mongoose.Schema.ObjectId],
-        ref: 'Inventory',
-        default: []
-    },
-    medicines:{
-        type: [mongoose.Schema.ObjectId],
-        ref: 'Medicine',
-        default: []
-    },
-    perks:{
+    perks: {
         type: [mongoose.Schema.ObjectId],
         ref: 'Perk',
         default: []
     },
-    weapons:{
-        type: [mongoose.Schema.ObjectId],
-        ref: 'Weapon',
-        default: []
-    },
-    effects:{
+    effects: {
         type: [mongoose.Schema.ObjectId],
         ref: 'Effect',
-        default: []
-    },
-    fractions: {
-        type: [mongoose.Schema.ObjectId],
-        ref: 'Fraction',
         default: []
     },
     quests: {
@@ -79,6 +97,7 @@ const sessionSchema = new mongoose.Schema({
 }, {
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
-});
+})
 
-export default mongoose.model('Session', sessionSchema);
+
+export default mongoose.model('Session', sessionSchema)

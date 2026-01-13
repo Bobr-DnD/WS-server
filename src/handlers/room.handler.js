@@ -18,11 +18,12 @@ const registerRoomHandler = (io, socket) => {
         socket.join(sessionId);
 
         io.to(sessionId).emit('session:update', {
-            session: session.toJSON(),
+            room: session.toJSON()
+
         });
 
         socket.emit('session:join', {
-            session: session.toJSON(),
+            room: session.toJSON()
         });
 
         fastify.log.info({
@@ -36,15 +37,17 @@ const registerRoomHandler = (io, socket) => {
         const session = roomManager.leave(socket.id, sessionId);
 
         socket.leave(sessionId);
-        
-        if (session && session.members.length) {
-            io.to(sessionId).emit('session:update', roomManager.get(sessionId).toJSON());
+
+        if (session && session.members.size) {
+            io.to(sessionId).emit('session:update', {
+                room: roomManager.get(sessionId).toJSON()
+            });
         }
 
         fastify.log.info({
             socketId: socket.id,
             sessionId: sessionId,
-        }, 'User left session');        
+        }, 'User left session');
     });
 
     socket.on('session:reconnect', async (sessionId, { role, characterId }) => {
@@ -66,7 +69,7 @@ const registerRoomHandler = (io, socket) => {
             const move = await getSessionMove();
 
             io.to(sessionId).emit('session:update', {
-                session: session.toJSON(),
+                room: session.toJSON(),
                 move: move,
             });
 
@@ -74,7 +77,7 @@ const registerRoomHandler = (io, socket) => {
                 ? await getCharacterName(characterId)
                 : null;
 
-            fastify.log.info({ 
+            fastify.log.info({
                 socketId: socket.id,
                 sessionId: sessionId,
                 characterId: characterId,
@@ -87,8 +90,11 @@ const registerRoomHandler = (io, socket) => {
 
         sessionIds.forEach((sessionId) => {
             const session = roomManager.get(sessionId);
-            if (session && session.members.length) {
-                io.to(sessionId).emit('session:update', session.toJSON());
+
+            if (session && session.members.size) {
+                io.to(sessionId).emit('session:update', {
+                    room: session.toJSON()
+                });
             }
         });
 
