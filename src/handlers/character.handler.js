@@ -29,6 +29,25 @@ const registerCharacterHandler = (io, socket) => {
         }
     });
 
+    socket.on('character:updateAdmin', async (characterId) => {
+        try {
+            const character = await getCharacter(characterId)
+            const room = roomManager.get(character.session.toString())
+
+            if (room) {
+
+                room.members.forEach((value, key) => {
+                    if (value.userId === character.id) {
+                        io.to(key).emit('character:updateAdmin', character)
+                    }
+                })
+            }
+        }
+        catch (error) {
+            socketErrorHandler(socket, error);
+        }
+    });
+
     socket.on('character:get', async (characterId) => {
         try {
             const character = await getCharacter(characterId)

@@ -135,7 +135,7 @@ const registerSessionHandler = (io, socket) => {
     socket.on('session:updateAdmin', async (sessionId) => {
         try {
             const session = await getSession(sessionId)
-            const room = roomManager.get(character.session.toString())
+            const room = roomManager.get(session.id.toString())
 
             if (room) {
 
