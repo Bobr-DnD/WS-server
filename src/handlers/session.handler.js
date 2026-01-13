@@ -124,7 +124,6 @@ const registerSessionHandler = (io, socket) => {
     socket.on('session:updateEverywhere', async (sessionId) => {
         try {
             const session = await getSession(sessionId)
-            console.log('updated');
 
             io.to(session.id).emit('session:updateEverywhere', session)
         }
@@ -139,14 +138,11 @@ const registerSessionHandler = (io, socket) => {
             const room = roomManager.get(character.session.toString())
 
             if (room) {
-                console.log(room);
 
                 room.members.forEach((value, key) => {
                     if (value.role === 'admin') {
                         io.to(key).emit('session:updateAdmin', session)
-                        console.log(key);
                     }
-
                 })
             }
         }

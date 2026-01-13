@@ -12,19 +12,15 @@ const registerCharacterHandler = (io, socket) => {
             const room = roomManager.get(character.session.toString())
 
             if (room) {
-                console.log(room);
 
                 room.members.forEach((value, key) => {
                     if (value.userId === character.id) {
                         io.to(key).emit('character:update', character)
-                        console.log(key);
                     }
 
                     if (value.role === 'admin') {
                         io.to(key).emit('character:update', character)
-                        console.log(key);
                     }
-
                 })
             }
         }
