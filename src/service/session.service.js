@@ -1,6 +1,6 @@
 import Session from '../schemas/session.schema.js';
 import { populateSession } from '../utils/entityPopulator.js';
-import { transformArray } from '../utils/IdConverter.js';
+import { transformArray } from '../utils/IDConverter.js';
 import { sortByTwoFields } from '../utils/filtration.js';
 import { DatabaseError } from '../utils/errors.js';
 

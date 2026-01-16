@@ -8,7 +8,7 @@ await app(fastify);
 
 const startServer = async () => {
     try {
-        await fastify.listen({ port: process.env.PORT || 3067 });
+        await fastify.listen({ port: process.env.PORT || 3067, host: '0.0.0.0' });
         fastify.log.info(`Server started on port ${fastify.server.address().port}`);
         createSocketServer(fastify);
     } catch (err) {
