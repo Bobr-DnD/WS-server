@@ -5,9 +5,16 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: './.env' });
 
+const corsOrigins = process.env.CORS_ORIGIN
+  ?.split(',')
+  .map(o => o.trim())
+
+  console.log(corsOrigins);
+  
+
 export default async (fastify) => {
     fastify.register(customLogger);
-    fastify.register(cors, { origin: '*' });
+    fastify.register(cors, { origin: corsOrigins });
     fastify.register(mongoosePlugin, { use_local: process.env.DB_LOCAL === 'true' });
 
     fastify.get('/', async () => {
