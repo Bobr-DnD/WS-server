@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 
 dotenv.config({ path: './.env' });
 
-const corsOrigins = process.env.CORS_ORIGIN
+const corsOrigins = process.env.CORS_ORIGIN_WS
   ?.split(',')
   .map(o => o.trim())
 
