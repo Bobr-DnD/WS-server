@@ -3,6 +3,8 @@ import { getSession, getSessionCharactersIds, getSessionName, updateSession, upd
 import { roomManager } from '../core/rooms/room.manager.js';
 import { getCharacterName } from '../service/character.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
+import { applyEffects } from '../utils/characterHelper.js';
+import { sortByTwoFields, transformArray } from '../utils/filtration.js';
 
 const registerSessionHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
@@ -121,40 +123,35 @@ const registerSessionHandler = (io, socket) => {
     //     }
     // });
 
-    socket.on('session:updateEverywhere', async (sessionId) => {
-        try {
-            const session = await getSession(sessionId)
-
-            io.to(session.id).emit('session:updateEverywhere', session)
-        }
-        catch (error) {
-            socketErrorHandler(socket, error);
-        }
-    })
-
-    socket.on('session:updateAdmin', async (sessionId) => {
-        try {
-            const session = await getSession(sessionId)
-            const room = roomManager.get(session.id.toString())
-
-            if (room) {
-
-                room.members.forEach((value, key) => {
-                    if (value.role === 'admin') {
-                        io.to(key).emit('session:updateAdmin', session)
-                    }
-                })
-            }
-        }
-        catch (error) {
-            socketErrorHandler(socket, error);
-        }
-    })
-
-    socket.on('session:updateSession', async (sessionData) => {
+    socket.on('session:updateData', async (sessionData) => {
         try {
             const session = await updateSession(sessionData)
-            socket.emit('session:updateSession', session)
+
+            SortAndTransform(session)
+            session.characters.forEach(character => {
+                applyEffects(character)
+            })
+
+            console.log(session);
+            
+
+            io.to(session.id.toString()).emit('session:updateNotify', session)
+        }
+        catch (error) {
+            socketErrorHandler(socket, error);
+        }
+    })
+
+    socket.on('session:updateNotify', async (sessionId) => {
+        try {
+            const session = await getSession(sessionId)
+
+            SortAndTransform(session)
+            session.characters.forEach(character => {
+                applyEffects(character)
+            })
+
+            io.to(sessionId).emit('session:updateNotify', session)
         }
         catch (error) {
             socketErrorHandler(socket, error);
@@ -164,12 +161,40 @@ const registerSessionHandler = (io, socket) => {
     socket.on('session:get', async (sessionId) => {
         try {
             const session = await getSession(sessionId)
-            socket.emit('session:get', session)
+
+            SortAndTransform(session)
+            session.characters.forEach(character => {
+                applyEffects(character)
+            })
+
+            const room = roomManager.get(sessionId)
+
+            if (room) {
+
+                room.members.forEach((value, key) => {
+
+                    if (value.role === 'admin') {
+                        io.to(key).emit('session:get', session)
+                    }
+                })
+            }
         }
         catch (error) {
             socketErrorHandler(socket, error);
         }
     })
+
+    function SortAndTransform(session) {
+        transformArray(session.characters)
+        //TODO fix perks sorting by fields after api fix it
+        sortByTwoFields(session.entities, 'type', 'name')
+        sortByTwoFields(session.perks, 'type', 'name')
+
+        session.characters.map(ch => {
+            sortByTwoFields(ch.perks, 'type', 'name')
+            sortByTwoFields(ch.entities, 'type', 'name')
+        })
+    }
 };
 
 export default registerSessionHandler;

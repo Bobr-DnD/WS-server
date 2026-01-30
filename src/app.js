@@ -9,9 +9,6 @@ const corsOrigins = process.env.CORS_ORIGIN_WS
   ?.split(',')
   .map(o => o.trim())
 
-  console.log(corsOrigins);
-  
-
 export default async (fastify) => {
     fastify.register(customLogger);
     fastify.register(cors, { origin: corsOrigins });
