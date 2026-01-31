@@ -3,7 +3,7 @@ import { getCharacter, updateCharacter } from '../service/character.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
 import { roomManager } from '../core/rooms/room.manager.js';
 import { applyEffects } from '../utils/characterHelper.js';
-import { sortByTwoFields } from '../utils/filtration.js';
+import { sortByTwoFields, sortPerksByTwoFields } from '../utils/filtration.js';
 
 const registerCharacterHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
@@ -77,7 +77,7 @@ const registerCharacterHandler = (io, socket) => {
     });
 
     function sortFields(character) {
-        sortByTwoFields(character.perks, 'type', 'name')
+        sortPerksByTwoFields(character.perks, 'type', 'name')
         sortByTwoFields(character.entities, 'type', 'name')
     }
 }

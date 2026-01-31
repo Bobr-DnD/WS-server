@@ -4,7 +4,7 @@ import { roomManager } from '../core/rooms/room.manager.js';
 import { getCharacterName } from '../service/character.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
 import { applyEffects } from '../utils/characterHelper.js';
-import { sortByTwoFields, transformArray } from '../utils/filtration.js';
+import { sortByTwoFields, sortPerksByTwoFields, transformArray } from '../utils/filtration.js';
 
 const registerSessionHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
@@ -84,45 +84,6 @@ const registerSessionHandler = (io, socket) => {
         }
     });
 
-    // socket.on('session:changeMove', async (sessionId, { moveValue }) => {
-    //     const session = roomManager.get(sessionId);
-    //     if (!session) {
-    //         socket.emit('error', { message: `Session with id ${sessionId} not found` });
-    //         return;
-    //     }
-
-    //     if (!session.hasMember(socket.id)) {
-    //         socket.emit('error', { message: `User with id ${socket.id} is not in session ${sessionId}` });
-    //         return;
-    //     }
-
-    //     let sessionName = null;
-
-    //     try {
-    //         sessionName = await getSessionName(sessionId);
-    //     } catch (error) {
-    //         socketErrorHandler(socket, error);
-    //         return;
-    //     }
-
-    //     if (session.get(socket.id).role !== 'admin') {
-    //         socket.emit('error', { message: `User with id ${socket.id} is not admin in session ${sessionId} (${sessionName})` });
-    //         return;
-    //     }
-
-    //     try {
-    //         const newMove = await updateSessionMove(sessionId, moveValue);
-    //         io.to(sessionId).emit('session:update', { move: newMove });
-
-    //         fastify.log.info({
-    //             socketId: socket.id,
-    //             sessionId: sessionId,
-    //         }, `Admin change move to ${newMove} in session (${sessionName})`);
-    //     } catch (error) {
-    //         socketErrorHandler(socket, error);
-    //     }
-    // });
-
     socket.on('session:updateData', async (sessionData) => {
         try {
             const session = await updateSession(sessionData)
@@ -186,12 +147,12 @@ const registerSessionHandler = (io, socket) => {
 
     function SortAndTransform(session) {
         transformArray(session.characters)
-        //TODO fix perks sorting by fields after api fix it
+        
         sortByTwoFields(session.entities, 'type', 'name')
-        sortByTwoFields(session.perks, 'type', 'name')
+        sortPerksByTwoFields(session.perks, 'type', 'name')
 
         session.characters.map(ch => {
-            sortByTwoFields(ch.perks, 'type', 'name')
+            sortPerksByTwoFields(ch.perks, 'type', 'name')
             sortByTwoFields(ch.entities, 'type', 'name')
         })
     }
