@@ -3,6 +3,8 @@ import { getSession, getSessionCharactersIds, getSessionName, updateSession, upd
 import { roomManager } from '../core/rooms/room.manager.js';
 import { getCharacterName } from '../service/character.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
+import { applyEffects } from '../utils/characterHelper.js';
+import { sortByTwoFields, sortPerksByTwoFields, transformArray } from '../utils/filtration.js';
 
 const registerSessionHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
@@ -82,79 +84,35 @@ const registerSessionHandler = (io, socket) => {
         }
     });
 
-    // socket.on('session:changeMove', async (sessionId, { moveValue }) => {
-    //     const session = roomManager.get(sessionId);
-    //     if (!session) {
-    //         socket.emit('error', { message: `Session with id ${sessionId} not found` });
-    //         return;
-    //     }
-
-    //     if (!session.hasMember(socket.id)) {
-    //         socket.emit('error', { message: `User with id ${socket.id} is not in session ${sessionId}` });
-    //         return;
-    //     }
-
-    //     let sessionName = null;
-
-    //     try {
-    //         sessionName = await getSessionName(sessionId);
-    //     } catch (error) {
-    //         socketErrorHandler(socket, error);
-    //         return;
-    //     }
-
-    //     if (session.get(socket.id).role !== 'admin') {
-    //         socket.emit('error', { message: `User with id ${socket.id} is not admin in session ${sessionId} (${sessionName})` });
-    //         return;
-    //     }
-
-    //     try {
-    //         const newMove = await updateSessionMove(sessionId, moveValue);
-    //         io.to(sessionId).emit('session:update', { move: newMove });
-
-    //         fastify.log.info({
-    //             socketId: socket.id,
-    //             sessionId: sessionId,
-    //         }, `Admin change move to ${newMove} in session (${sessionName})`);
-    //     } catch (error) {
-    //         socketErrorHandler(socket, error);
-    //     }
-    // });
-
-    socket.on('session:updateEverywhere', async (sessionId) => {
-        try {
-            const session = await getSession(sessionId)
-
-            io.to(session.id).emit('session:updateEverywhere', session)
-        }
-        catch (error) {
-            socketErrorHandler(socket, error);
-        }
-    })
-
-    socket.on('session:updateAdmin', async (sessionId) => {
-        try {
-            const session = await getSession(sessionId)
-            const room = roomManager.get(session.id.toString())
-
-            if (room) {
-
-                room.members.forEach((value, key) => {
-                    if (value.role === 'admin') {
-                        io.to(key).emit('session:updateAdmin', session)
-                    }
-                })
-            }
-        }
-        catch (error) {
-            socketErrorHandler(socket, error);
-        }
-    })
-
-    socket.on('session:updateSession', async (sessionData) => {
+    socket.on('session:updateData', async (sessionData) => {
         try {
             const session = await updateSession(sessionData)
-            socket.emit('session:updateSession', session)
+
+            SortAndTransform(session)
+            session.characters.forEach(character => {
+                applyEffects(character)
+            })
+
+            console.log(session);
+            
+
+            io.to(session.id.toString()).emit('session:updateNotify', session)
+        }
+        catch (error) {
+            socketErrorHandler(socket, error);
+        }
+    })
+
+    socket.on('session:updateNotify', async (sessionId) => {
+        try {
+            const session = await getSession(sessionId)
+
+            SortAndTransform(session)
+            session.characters.forEach(character => {
+                applyEffects(character)
+            })
+
+            io.to(sessionId).emit('session:updateNotify', session)
         }
         catch (error) {
             socketErrorHandler(socket, error);
@@ -164,12 +122,40 @@ const registerSessionHandler = (io, socket) => {
     socket.on('session:get', async (sessionId) => {
         try {
             const session = await getSession(sessionId)
-            socket.emit('session:get', session)
+
+            SortAndTransform(session)
+            session.characters.forEach(character => {
+                applyEffects(character)
+            })
+
+            const room = roomManager.get(sessionId)
+
+            if (room) {
+
+                room.members.forEach((value, key) => {
+
+                    if (value.role === 'admin') {
+                        io.to(key).emit('session:get', session)
+                    }
+                })
+            }
         }
         catch (error) {
             socketErrorHandler(socket, error);
         }
     })
+
+    function SortAndTransform(session) {
+        transformArray(session.characters)
+        
+        sortByTwoFields(session.entities, 'type', 'name')
+        sortPerksByTwoFields(session.perks, 'type', 'name')
+
+        session.characters.map(ch => {
+            sortPerksByTwoFields(ch.perks, 'type', 'name')
+            sortByTwoFields(ch.entities, 'type', 'name')
+        })
+    }
 };
 
 export default registerSessionHandler;

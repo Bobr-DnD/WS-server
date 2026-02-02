@@ -100,4 +100,8 @@ const characterSchema = new mongoose.Schema({
         toObject: { virtuals: true }
     });
 
+characterSchema.virtual('characteristicsComputed').get(function () {
+    return this._characteristicsComputed
+})
+
 export default mongoose.model('Character', characterSchema)
