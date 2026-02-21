@@ -1,8 +1,9 @@
 import Session from '../schemas/session.schema.js';
 import { populateSession } from '../utils/entityPopulator.js';
 import { transformArray } from '../utils/IDConverter.js';
-import { sortByTwoFields } from '../utils/filtration.js';
+import { sortByTwoFields, sortPerksByTwoFields } from '../utils/filtration.js';
 import { DatabaseError } from '../utils/errors.js';
+import { applyEffects } from '../utils/characterHelper.js';
 
 export const getSessionMove = async (sessionId) => {
     const session = await Session.findById(sessionId);
@@ -47,6 +48,10 @@ export const getSession = async (sessionId) => {
     if (!session) throw new DatabaseError('Session not found')
 
     SortAndTransform(session)
+    session.characters.forEach(character => {
+        applyEffects(character)
+    })
+
     return session
 }
 
@@ -58,17 +63,21 @@ export const updateSession = async (sessionData) => {
     if (!session) throw new DatabaseError('Session not found')
 
     SortAndTransform(session)
+    session.characters.forEach(character => {
+        applyEffects(character)
+    })
+
     return session
 }
 
-function SortAndTransform(session){
+function SortAndTransform(session) {
     transformArray(session.characters)
 
     sortByTwoFields(session.entities, 'type', 'name')
-    sortByTwoFields(session.perks, 'type', 'name')
+    sortPerksByTwoFields(session.perks, 'name', 'name')
 
     session.characters.map(ch => {
-        sortByTwoFields(ch.perks, 'type', 'name')
+        sortPerksByTwoFields(ch.perks, 'name', 'name')
         sortByTwoFields(ch.entities, 'type', 'name')
     })
 }

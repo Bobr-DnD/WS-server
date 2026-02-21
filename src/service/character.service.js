@@ -1,6 +1,7 @@
 import Character from '../schemas/character.schema.js';
 import { populateCharacter } from '../utils/entityPopulator.js';
-import { sortByTwoFields } from '../utils/filtration.js';
+import { sortByTwoFields, sortPerksByTwoFields } from '../utils/filtration.js';
+import { applyEffects } from '../utils/characterHelper.js';
 import { DatabaseError } from '../utils/errors.js';
 
 export const getCharacterName = async (characterId) => {
@@ -19,6 +20,8 @@ export const updateCharacter = async (characterData) => {
     if (!character) throw new DatabaseError('Character not found')
 
     sortFields(character)
+    applyEffects(character)
+
     return character
 }
 
@@ -30,11 +33,13 @@ export const getCharacter = async (characterId) => {
     if (!character) throw new DatabaseError('Character not found')
 
     sortFields(character)
+    applyEffects(character)
+
     return character
 }
 
 
-function sortFields(character){
-    sortByTwoFields(character.perks, 'type', 'name')
+function sortFields(character) {
+    sortPerksByTwoFields(character.perks, 'name', 'name')
     sortByTwoFields(character.entities, 'type', 'name')
 }

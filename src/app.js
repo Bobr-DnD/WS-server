@@ -6,8 +6,8 @@ import dotenv from 'dotenv';
 dotenv.config({ path: './.env' });
 
 const corsOrigins = process.env.CORS_ORIGIN_WS
-  ?.split(',')
-  .map(o => o.trim())
+    ?.split(',')
+    .map(o => o.trim())
 
 export default async (fastify) => {
     fastify.register(customLogger);
