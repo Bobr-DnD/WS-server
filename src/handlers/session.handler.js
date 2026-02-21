@@ -3,8 +3,6 @@ import { getSession, getSessionCharactersIds, getSessionName, updateSession, upd
 import { roomManager } from '../core/rooms/room.manager.js';
 import { getCharacterName } from '../service/character.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
-import { applyEffects } from '../utils/characterHelper.js';
-import { sortByTwoFields, sortPerksByTwoFields, transformArray } from '../utils/filtration.js';
 
 const registerSessionHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
@@ -88,14 +86,6 @@ const registerSessionHandler = (io, socket) => {
         try {
             const session = await updateSession(sessionData)
 
-            SortAndTransform(session)
-            session.characters.forEach(character => {
-                applyEffects(character)
-            })
-
-            console.log(session);
-            
-
             io.to(session.id.toString()).emit('session:updateNotify', session)
         }
         catch (error) {
@@ -105,12 +95,7 @@ const registerSessionHandler = (io, socket) => {
 
     socket.on('session:updateNotify', async (sessionId) => {
         try {
-            const session = await getSession(sessionId)
-
-            SortAndTransform(session)
-            session.characters.forEach(character => {
-                applyEffects(character)
-            })
+            const session = await getSession(sessionId)  
 
             io.to(sessionId).emit('session:updateNotify', session)
         }
@@ -122,11 +107,6 @@ const registerSessionHandler = (io, socket) => {
     socket.on('session:get', async (sessionId) => {
         try {
             const session = await getSession(sessionId)
-
-            SortAndTransform(session)
-            session.characters.forEach(character => {
-                applyEffects(character)
-            })
 
             const room = roomManager.get(sessionId)
 
@@ -144,18 +124,6 @@ const registerSessionHandler = (io, socket) => {
             socketErrorHandler(socket, error);
         }
     })
-
-    function SortAndTransform(session) {
-        transformArray(session.characters)
-        
-        sortByTwoFields(session.entities, 'type', 'name')
-        sortPerksByTwoFields(session.perks, 'type', 'name')
-
-        session.characters.map(ch => {
-            sortPerksByTwoFields(ch.perks, 'type', 'name')
-            sortByTwoFields(ch.entities, 'type', 'name')
-        })
-    }
 };
 
 export default registerSessionHandler;
