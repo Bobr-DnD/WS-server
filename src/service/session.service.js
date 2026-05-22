@@ -32,7 +32,7 @@ export const getSessionCharactersIds = async (sessionId) => {
     return session.characters;
 };
 
-export const getSessionName = async (sessionId) => {
+export const getSessionName = async (sessionId) => {    
     const sessionName = await Session.findById(sessionId).select('name');
     if (!sessionName) {
         throw new DatabaseError('Session not found');
