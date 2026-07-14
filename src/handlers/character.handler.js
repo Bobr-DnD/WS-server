@@ -53,17 +53,6 @@ const registerCharacterHandler = (io, socket) => {
             socketErrorHandler(socket, error);
         }
     });
-
-    socket.on('character:get', async (characterId) => {
-        try {
-            const character = await getCharacter(characterId)
-
-            socket.emit('character:get', character)
-        }
-        catch (error) {
-            socketErrorHandler(socket, error);
-        }
-    });
 }
 
 export default registerCharacterHandler;

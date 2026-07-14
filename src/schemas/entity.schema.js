@@ -13,8 +13,8 @@ const entitySchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: [true, 'Entity should have a description'],
-        trim: true
+        trim: true,
+        default: null
     },
     image: {
         type: String,

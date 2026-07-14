@@ -93,37 +93,16 @@ const registerSessionHandler = (io, socket) => {
         }
     })
 
-    socket.on('session:updateNotify', async (sessionId) => {
+    socket.on('session:updateDataNotify', async (sessionId) => {
         try {
             const session = await getSession(sessionId)  
-
-            io.to(sessionId).emit('session:updateNotify', session)
+            io.to(sessionId).emit('session:updateDataNotify', session)
         }
         catch (error) {
             socketErrorHandler(socket, error);
         }
     })
 
-    socket.on('session:get', async (sessionId) => {
-        try {
-            const session = await getSession(sessionId)
-
-            const room = roomManager.get(sessionId)
-
-            if (room) {
-
-                room.members.forEach((value, key) => {
-
-                    if (value.role === 'admin') {
-                        io.to(key).emit('session:get', session)
-                    }
-                })
-            }
-        }
-        catch (error) {
-            socketErrorHandler(socket, error);
-        }
-    })
 };
 
 export default registerSessionHandler;
