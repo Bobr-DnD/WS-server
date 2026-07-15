@@ -14,7 +14,7 @@ export default async (fastify) => {
     fastify.register(cors, { origin: corsOrigins });
     fastify.register(mongoosePlugin, { use_local: process.env.DB_LOCAL === 'true' });
 
-    fastify.get('/', async () => {
-        return { message: 'WS server is running' };
+    fastify.get('/health', async (request, response) => {
+        return response.code(200).send({ message: 'WS server is running' });
     });
 };

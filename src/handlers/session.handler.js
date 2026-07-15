@@ -82,17 +82,6 @@ const registerSessionHandler = (io, socket) => {
         }
     });
 
-    socket.on('session:updateData', async (sessionData) => {
-        try {
-            const session = await updateSession(sessionData)
-
-            io.to(session.id.toString()).emit('session:updateNotify', session)
-        }
-        catch (error) {
-            socketErrorHandler(socket, error);
-        }
-    })
-
     socket.on('session:updateDataNotify', async (sessionId) => {
         try {
             const session = await getSession(sessionId)  
