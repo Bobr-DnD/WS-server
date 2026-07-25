@@ -19,7 +19,6 @@ const registerRoomHandler = (io, socket) => {
 
         io.to(sessionId).emit('session:update', {
             room: session.toJSON()
-
         });
 
         socket.emit('session:join', {

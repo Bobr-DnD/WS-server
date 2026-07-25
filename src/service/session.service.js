@@ -3,7 +3,6 @@ import { populateSession } from '../utils/entityPopulator.js';
 import { transformArray } from '../utils/IDConverter.js';
 import { sortByTwoFields, sortPerksByTwoFields } from '../utils/filtration.js';
 import { DatabaseError } from '../utils/errors.js';
-import { applyEffects } from '../utils/characterHelper.js';
 
 export const getSessionMove = async (sessionId) => {
     const session = await Session.findById(sessionId);
@@ -32,7 +31,7 @@ export const getSessionCharactersIds = async (sessionId) => {
     return session.characters;
 };
 
-export const getSessionName = async (sessionId) => {
+export const getSessionName = async (sessionId) => {    
     const sessionName = await Session.findById(sessionId).select('name');
     if (!sessionName) {
         throw new DatabaseError('Session not found');
@@ -48,9 +47,6 @@ export const getSession = async (sessionId) => {
     if (!session) throw new DatabaseError('Session not found')
 
     SortAndTransform(session)
-    session.characters.forEach(character => {
-        applyEffects(character)
-    })
 
     return session
 }
@@ -63,10 +59,6 @@ export const updateSession = async (sessionData) => {
     if (!session) throw new DatabaseError('Session not found')
 
     SortAndTransform(session)
-    session.characters.forEach(character => {
-        applyEffects(character)
-    })
-
     return session
 }
 

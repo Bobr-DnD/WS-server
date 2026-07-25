@@ -1,4 +1,9 @@
 import mongoose from "mongoose";
+import loadoutLimitsSchema from '../schemasTypes/loadoutLimits.schema.js';
+import iconType from "../schemasTypes/typeWithIcon.schema.js";
+import colorType from "../schemasTypes/typeWithColor.schema.js"
+import nameType from "../schemasTypes/TypeWithName.schema.js"
+import customField from "../schemasTypes/customField.schema.js";
 
 const sessionSchema = new mongoose.Schema({
     name: {
@@ -11,58 +16,35 @@ const sessionSchema = new mongoose.Schema({
         trim: true,
         default: null
     },
-    //TODO probably move is not important field
-    // move: {
-    //     type: Number,
-    //     default: 0
-    // },
+    password: {
+        type: String,
+        minLength: 8,
+        select: false,
+        required: [true, 'Session should have a password']
+    },
     customFields: {
-        type: Object,
-        default: {}
+        type: [customField],
+        default: []
     },
     notes: {
         type: String,
         default: null
     },
     entityTypes: {
-        type: [Object],
+        type: [iconType],
         default: [],
-        id: String,
-        icon: String,
-        name: String
     },
     currencyTypes: {
-        type: [Object],
-        default: [],
-        id: String,
-        name: String,
-        icon: String
+        type: [iconType],
+        default: []
     },
     characteristicsList: {
-        type: [Object],
-        default: [],
-        id: String,
-        name: String
+        type: [nameType],
+        default: []
     },
-    questTypes: {
-        type: [Object],
+    perkTypes: {
+        type: [colorType],
         default: [],
-        id: String,
-        name: String
-    },
-    perkTypes:{
-        type: [Object],
-        default: [],
-        id: String,
-        name: String,
-        color: String
-    },
-    enemyTypes: {
-        type: [Object],
-        default: [],
-        id: String,
-        name: String,
-        icon: String
     },
     characters: {
         type: [mongoose.Schema.ObjectId],
@@ -72,11 +54,6 @@ const sessionSchema = new mongoose.Schema({
     entities: {
         type: [mongoose.Schema.ObjectId],
         ref: 'Entity',
-        default: []
-    },
-    enemies: {
-        type: [mongoose.Schema.ObjectId],
-        ref: 'Enemy',
         default: []
     },
     perks: {
@@ -89,15 +66,13 @@ const sessionSchema = new mongoose.Schema({
         ref: 'Effect',
         default: []
     },
-    quests: {
-        type: [mongoose.Schema.ObjectId],
-        ref: 'Quest',
-        default: []
+    loadoutsLimit: {
+        type: loadoutLimitsSchema,
+        default: () => ({})
     }
 }, {
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 })
-
 
 export default mongoose.model('Session', sessionSchema)
