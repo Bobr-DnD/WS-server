@@ -1,5 +1,4 @@
 import mongoose from 'mongoose'
-import loadoutLimitsSchema from '../schemasTypes/loadoutLimits.schema.js';
 import loadoutsSchema from '../schemasTypes/loadouts.schema.js';
 import healthSchema from '../schemasTypes/health.schema.js';
 import currencySchema from '../schemasTypes/currency.schema.js';
@@ -95,10 +94,6 @@ const characterSchema = new mongoose.Schema({
     loadouts: {
         type: [loadoutsSchema],
         default: []
-    },
-    loadoutsLimit: {
-        type: loadoutLimitsSchema,
-        default: () => ({})
     }
 },
     {

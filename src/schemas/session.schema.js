@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import loadoutLimitsSchema from '../schemasTypes/loadoutLimits.schema.js';
 import iconType from "../schemasTypes/typeWithIcon.schema.js";
 import colorType from "../schemasTypes/typeWithColor.schema.js"
 import nameType from "../schemasTypes/TypeWithName.schema.js"
@@ -64,6 +65,10 @@ const sessionSchema = new mongoose.Schema({
         type: [mongoose.Schema.ObjectId],
         ref: 'Effect',
         default: []
+    },
+    loadoutsLimit: {
+        type: loadoutLimitsSchema,
+        default: () => ({})
     }
 }, {
     toJSON: { virtuals: true },
