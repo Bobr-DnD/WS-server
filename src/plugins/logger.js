@@ -8,12 +8,7 @@ const customLogger = async (fastify, opts) => {
     });
 
     fastify.setErrorHandler((error, request, reply) => {
-        fastify.log.error({
-            method: request.method,
-            url: request.url,
-            message: error.message,
-            stack: error.stack
-        }, `[ERR] ${request.method} ${request.url} → ${reply.statusCode}`);
+        fastify.log.error(`[ERR] ${request.method} ${request.url} → ${reply.statusCode} - ${error.message}\n${error.stack}`);
 
         reply.code(500).send({ error: 'Internal Server Error' });
     });

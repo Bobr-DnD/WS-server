@@ -1,35 +1,33 @@
+import { socketErrorHandler } from '../config/socketErrorHandler.js';
 import { roomManager } from '../core/rooms/room.manager.js';
 import fastifyInstance from '../core/fastify.instance.js';
-import { getSessionMove, getSessionName } from '../service/session.service.js';
+import { getSessionName } from '../service/session.service.js';
 import { getCharacterName } from '../service/character.service.js';
+import { RECONNECTION_GRACE_MS } from '../config/socket.constants.js';
 
 const registerRoomHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
 
     socket.on('session:join', async (sessionId, { role }) => {
-        const sessionName = await getSessionName(sessionId);
-        if (!sessionName) {
-            socket.emit('error', { message: `Session with id ${sessionId} not found` });
-            return;
+        try {
+            const sessionName = await getSessionName(sessionId);
+
+            const session = roomManager.join(socket.id, sessionId, role);
+
+            socket.join(sessionId);
+
+            io.to(sessionId).emit('session:update', {
+                room: session.toJSON()
+            });
+
+            socket.emit('session:join', {
+                room: session.toJSON()
+            });
+
+            fastify.log.info(`User joined session ${sessionName} (socketId: ${socket.id}, sessionId: ${sessionId}, role: ${role})`);
+        } catch (error) {
+            socketErrorHandler(socket, error);
         }
-
-        const session = roomManager.join(socket.id, sessionId, role);
-
-        socket.join(sessionId);
-
-        io.to(sessionId).emit('session:update', {
-            room: session.toJSON()
-        });
-
-        socket.emit('session:join', {
-            room: session.toJSON()
-        });
-
-        fastify.log.info({
-            socketId: socket.id,
-            role: role,
-            sessionId: sessionId,
-        }, `User joined session ${sessionName}`);
     });
 
     socket.on('session:leave', (sessionId) => {
@@ -43,63 +41,55 @@ const registerRoomHandler = (io, socket) => {
             });
         }
 
-        fastify.log.info({
-            socketId: socket.id,
-            sessionId: sessionId,
-        }, 'User left session');
+        fastify.log.info(`User left session (socketId: ${socket.id}, sessionId: ${sessionId})`);
     });
 
     socket.on('session:reconnect', async (sessionId, { role, characterId }) => {
-        const sessionName = await getSessionName(sessionId);
-        if (!sessionName) {
-            socket.emit('error', { message: `Session with id ${sessionId} not found` });
-            return;
-        }
+        try {
+            const sessionName = await getSessionName(sessionId);
 
-        const session = roomManager.get(sessionId);
+            const session = roomManager.getOrCreate(sessionId);
 
-        if (session) {
             session.addMember(socket.id, role);
             if (characterId) {
                 session.connectCharacterToMember(socket.id, characterId);
             }
             socket.join(sessionId);
 
-            const move = await getSessionMove();
-
             io.to(sessionId).emit('session:update', {
                 room: session.toJSON(),
-                move: move,
+            });
+
+            socket.emit('session:reconnect', {
+                room: session.toJSON(),
             });
 
             const characterName = characterId
                 ? await getCharacterName(characterId)
                 : null;
 
-            fastify.log.info({
-                socketId: socket.id,
-                sessionId: sessionId,
-                characterId: characterId,
-            }, `User ${characterName ? `(${characterName}) ` : ''}reconnected to session (${sessionName})`);
+            fastify.log.info(`User ${characterName ? `(${characterName}) ` : ''}reconnected to session (${sessionName}) (socketId: ${socket.id}, sessionId: ${sessionId}, characterId: ${characterId})`);
+        } catch (error) {
+            socketErrorHandler(socket, error);
         }
     });
 
-    socket.on('disconnect', () => {
-        const sessionIds = roomManager.leaveAll(socket.id);
+    socket.on('disconnect', (reason) => {
+        fastify.log.info(`User disconnected, scheduling room cleanup (socketId: ${socket.id}, reason: ${reason})`);
 
-        sessionIds.forEach((sessionId) => {
-            const session = roomManager.get(sessionId);
+        roomManager.scheduleLeaveAll(socket.id, RECONNECTION_GRACE_MS, (sessionIds) => {
+            sessionIds.forEach((sessionId) => {
+                const session = roomManager.get(sessionId);
 
-            if (session && session.members.size) {
-                io.to(sessionId).emit('session:update', {
-                    room: session.toJSON()
-                });
-            }
+                if (session && session.members.size) {
+                    io.to(sessionId).emit('session:update', {
+                        room: session.toJSON()
+                    });
+                }
+            });
+
+            fastify.log.info(`User disconnected (socketId: ${socket.id})`);
         });
-
-        fastify.log.info({
-            socketId: socket.id,
-        }, 'User disconnected');
     });
 };
 
