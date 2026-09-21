@@ -1,5 +1,5 @@
 import { socketErrorHandler } from '../config/socketErrorHandler.js';
-import { getSession, getSessionCharactersIds, getSessionName, updateSession, updateSessionMove } from '../service/session.service.js';
+import { getSession, getSessionCharactersIds, getSessionName, updateSession } from '../service/session.service.js';
 import { roomManager } from '../core/rooms/room.manager.js';
 import { getCharacterName } from '../service/character.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
@@ -34,11 +34,7 @@ const registerSessionHandler = (io, socket) => {
                         : null;
 
                     const sessionName = await getSessionName(sessionId);
-                    fastify.log.info({
-                        socketId: socket.id,
-                        sessionId: sessionId,
-                        characterId: characterId,
-                    }, `User pick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName})`);
+                    fastify.log.info(`User pick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName}) (socketId: ${socket.id}, sessionId: ${sessionId}, characterId: ${characterId})`);
                 }
             }
         } catch (error) {
@@ -72,11 +68,7 @@ const registerSessionHandler = (io, socket) => {
                 : null;
 
             const sessionName = await getSessionName(sessionId);
-            fastify.log.info({
-                socketId: socket.id,
-                sessionId: sessionId,
-                characterId: characterId,
-            }, `User unpick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName})`);
+            fastify.log.info(`User unpick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName}) (socketId: ${socket.id}, sessionId: ${sessionId}, characterId: ${characterId})`);
         } catch (error) {
             socketErrorHandler(socket, error);
         }

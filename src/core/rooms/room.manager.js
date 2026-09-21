@@ -4,6 +4,7 @@ import fastifyInstance from '../fastify.instance.js';
 class RoomManager {
     constructor() {
         this.rooms = new Map();
+        this.pendingLeaves = new Map();
     }
 
     get(roomId) {
@@ -13,9 +14,7 @@ class RoomManager {
     getOrCreate(roomId) {
         if (!this.rooms.has(roomId)) {
             this.rooms.set(roomId, new Room(roomId));
-            fastifyInstance.server.log.info({
-                roomId: roomId,
-            }, 'Room with session has been created');
+            fastifyInstance.server.log.info(`Room with session has been created (roomId: ${roomId})`);
         }
         return this.rooms.get(roomId);
     }
@@ -50,6 +49,26 @@ class RoomManager {
         return roomIds;
     }
 
+    scheduleLeaveAll(socketId, delayMs, onLeave) {
+        this.cancelScheduledLeave(socketId);
+
+        const timer = setTimeout(() => {
+            this.pendingLeaves.delete(socketId);
+            const roomIds = this.leaveAll(socketId);
+            onLeave(roomIds);
+        }, delayMs);
+
+        this.pendingLeaves.set(socketId, timer);
+    }
+
+    cancelScheduledLeave(socketId) {
+        const timer = this.pendingLeaves.get(socketId);
+        if (timer) {
+            clearTimeout(timer);
+            this.pendingLeaves.delete(socketId);
+        }
+    }
+
     connectCharacterToMember(socketId, roomId, userId) {
         const room = this.get(roomId);
         if (room) {
@@ -79,9 +98,7 @@ class RoomManager {
 
     deleteRoom(roomId) {
         this.rooms.delete(roomId);
-        fastifyInstance.server.log.info({ 
-            roomId: roomId,
-        }, 'Room with session has been deleted');
+        fastifyInstance.server.log.info(`Room with session has been deleted (roomId: ${roomId})`);
     }
 
     getRooms() {
