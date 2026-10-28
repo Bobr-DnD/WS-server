@@ -1,11 +1,11 @@
-import { DatabaseError, ValidationError } from '../utils/errors.js';
+import { DatabaseError, ValidationError, AuthError } from '../utils/errors.js';
 import fastifyInstance from '../core/fastify.instance.js';
 
 function socketErrorHandler(socket, error) {
     let message = 'Internal server error';
     let status = 500;
 
-    if (error instanceof DatabaseError || error instanceof ValidationError) {
+    if (error instanceof DatabaseError || error instanceof ValidationError || error instanceof AuthError) {
         message = error.message;
         status = error.statusCode;
     }

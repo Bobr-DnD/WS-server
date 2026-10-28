@@ -3,16 +3,34 @@ import { getCharacter, updateCharacter } from '../service/character.service.js';
 import { getSession } from '../service/session.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
 import { roomManager } from '../core/rooms/room.manager.js';
+import { logDataChange } from '../utils/wsLogger.js';
+import { applyPatchOps } from '../utils/patchHelper.js';
+import { AuthError } from '../utils/errors.js';
 
 const registerCharacterHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
 
-    socket.on('character:updateData', async (characterData) => {
+    socket.on('character:updateData', async ({ id, ops }) => {
         try {
-            const character = await updateCharacter(characterData)
+            const character_ = await getCharacter(id)
+            const room = roomManager.get(character_.session.toString())
+            const member = room?.members.get(socket.id)
+
+            if (!member || member.role !== 'admin') {
+                throw new AuthError('Not authorized to update this character')
+            }
+
+            const patch = applyPatchOps(ops)
+            const { character, diff } = await updateCharacter(id, patch)
             const session = await getSession(character.session)
-            const room = roomManager.get(character.session.toString())
-            
+
+            logDataChange(socket, {
+                event: 'character:updateData',
+                sessionId: character.session.toString(),
+                characterId: character.id,
+                diff
+            })
+
             if (room) {
 
                 room.members.forEach((value, key) => {

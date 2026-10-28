@@ -5,6 +5,7 @@ import registerCharacterHandler from '../handlers/character.handler.js';
 import fastifyInstance from '../core/fastify.instance.js';
 import { roomManager } from '../core/rooms/room.manager.js';
 import { RECONNECTION_GRACE_MS } from './socket.constants.js';
+import { logSocketEvent } from '../utils/wsLogger.js';
 
 const createSocketServer = () => {
     const fastify = fastifyInstance.server;
@@ -28,6 +29,10 @@ const createSocketServer = () => {
         } else {
             fastify.log.info(`User connected: ${socket.id}`);
         }
+
+        socket.onAny((event, ...args) => {
+            logSocketEvent(socket, event, args);
+        });
 
         registerRoomHandler(io, socket);
         registerSessionHandler(io, socket);
