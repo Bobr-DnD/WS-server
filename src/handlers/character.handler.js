@@ -16,7 +16,10 @@ const registerCharacterHandler = (io, socket) => {
             const room = roomManager.get(character_.session.toString())
             const member = room?.members.get(socket.id)
 
-            if (!member || member.role !== 'admin') {
+            const isAdmin = member?.role === 'admin'
+            const isOwnCharacter = member?.userId === id
+
+            if (!member || (!isAdmin && !isOwnCharacter)) {
                 throw new AuthError('Not authorized to update this character')
             }
 

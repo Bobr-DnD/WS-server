@@ -3,6 +3,7 @@ import { getSession, getSessionCharactersIds, getSessionName, updateSession } fr
 import { roomManager } from '../core/rooms/room.manager.js';
 import { getCharacterName } from '../service/character.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
+import { logAction } from '../utils/wsLogger.js';
 
 const registerSessionHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
@@ -35,6 +36,13 @@ const registerSessionHandler = (io, socket) => {
 
                     const sessionName = await getSessionName(sessionId);
                     fastify.log.info(`User pick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName}) (socketId: ${socket.id}, sessionId: ${sessionId}, characterId: ${characterId})`);
+
+                    logAction(socket, {
+                        event: 'session:connectCharacter',
+                        sessionId,
+                        characterId,
+                        message: characterName ? `Персонаж ${characterName} приєднався до сесії` : 'Невідомий персонаж приєднався до сесії'
+                    })
                 }
             }
         } catch (error) {
@@ -69,6 +77,13 @@ const registerSessionHandler = (io, socket) => {
 
             const sessionName = await getSessionName(sessionId);
             fastify.log.info(`User unpick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName}) (socketId: ${socket.id}, sessionId: ${sessionId}, characterId: ${characterId})`);
+
+            logAction(socket, {
+                event: 'session:disconnectCharacter',
+                sessionId,
+                characterId,
+                message: characterName ? `Персонаж ${characterName} покинув сесію` : 'Невідомий персонаж покинув сесію'
+            })
         } catch (error) {
             socketErrorHandler(socket, error);
         }

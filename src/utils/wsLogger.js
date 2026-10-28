@@ -3,9 +3,13 @@ import { roomManager } from '../core/rooms/room.manager.js'
 import fastifyInstance from '../core/fastify.instance.js'
 import { formatDiffMessage } from './logFormatters.js'
 
-// These events are logged explicitly (with a computed diff) by their handlers,
-// so the generic onAny listener should not also log a raw duplicate.
-const DETAILED_EVENTS = new Set(['character:updateData'])
+// These events are logged explicitly (with a computed diff or a built message)
+// by their handlers, so the generic onAny listener should not also log a raw duplicate.
+const DETAILED_EVENTS = new Set([
+    'character:updateData',
+    'session:connectCharacter',
+    'session:disconnectCharacter'
+])
 
 function getSocketContext(socket) {
     const sessionId = [...socket.rooms].find((room) => room !== socket.id) || null
@@ -49,22 +53,44 @@ export function logSocketEvent(socket, event, args) {
     })
 }
 
-export function logDataChange(socket, { event, sessionId, characterId, diff }) {
+export async function logDataChange(socket, { event, sessionId, characterId, diff }) {
     const { role } = getSocketContext(socket)
 
     const payload = diff
         ? JSON.stringify(diff).slice(0, 2000)
         : 'Без змін'
 
-    WsLog.create({
-        event,
-        sessionId,
-        characterId,
-        role,
-        socketId: socket.id,
-        payload,
-        message: formatDiffMessage(diff)
-    }).catch((error) => {
+    try {
+        const message = await formatDiffMessage(diff)
+
+        await WsLog.create({
+            event,
+            sessionId,
+            characterId,
+            role,
+            socketId: socket.id,
+            payload,
+            message
+        })
+    } catch (error) {
         fastifyInstance.server.log.error(error, 'Failed to persist websocket log')
-    })
+    }
+}
+
+export async function logAction(socket, { event, sessionId, characterId, message }) {
+    const { role } = getSocketContext(socket)
+
+    try {
+        await WsLog.create({
+            event,
+            sessionId,
+            characterId,
+            role,
+            socketId: socket.id,
+            payload: message,
+            message
+        })
+    } catch (error) {
+        fastifyInstance.server.log.error(error, 'Failed to persist websocket log')
+    }
 }
