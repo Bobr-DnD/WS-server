@@ -41,7 +41,7 @@ const registerSessionHandler = (io, socket) => {
                         event: 'session:connectCharacter',
                         sessionId,
                         characterId,
-                        message: characterName ? `Персонаж ${characterName} приєднався до сесії` : 'Невідомий персонаж приєднався до сесії'
+                        message: 'Персонаж приєднався до сесії'
                     })
                 }
             }
@@ -82,7 +82,7 @@ const registerSessionHandler = (io, socket) => {
                 event: 'session:disconnectCharacter',
                 sessionId,
                 characterId,
-                message: characterName ? `Персонаж ${characterName} покинув сесію` : 'Невідомий персонаж покинув сесію'
+                message: 'Персонаж вийшов'
             })
         } catch (error) {
             socketErrorHandler(socket, error);

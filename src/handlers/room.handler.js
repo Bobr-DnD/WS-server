@@ -5,6 +5,7 @@ import { getSessionName } from '../service/session.service.js';
 import { getCharacterName } from '../service/character.service.js';
 import { RECONNECTION_GRACE_MS } from '../config/socket.constants.js';
 import { verifySessionToken } from '../utils/auth.js';
+import { logAction } from '../utils/wsLogger.js';
 
 const registerRoomHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
@@ -34,6 +35,10 @@ const registerRoomHandler = (io, socket) => {
     });
 
     socket.on('session:leave', (sessionId) => {
+        const leavingRoom = roomManager.get(sessionId);
+        const characterId = leavingRoom?.getCharacterBySocketId(socket.id) ?? null;
+        const role = leavingRoom?.members.get(socket.id)?.role ?? null;
+
         const session = roomManager.leave(socket.id, sessionId);
 
         socket.leave(sessionId);
@@ -45,6 +50,14 @@ const registerRoomHandler = (io, socket) => {
         }
 
         fastify.log.info(`User left session (socketId: ${socket.id}, sessionId: ${sessionId})`);
+
+        logAction(socket, {
+            event: 'session:leave',
+            sessionId,
+            characterId,
+            role,
+            message: 'Персонаж покинув сесію'
+        })
     });
 
     socket.on('session:reconnect', async (sessionId, { token, characterId }) => {

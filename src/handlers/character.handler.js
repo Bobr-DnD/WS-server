@@ -3,14 +3,14 @@ import { getCharacter, updateCharacter } from '../service/character.service.js';
 import { getSession } from '../service/session.service.js';
 import fastifyInstance from '../core/fastify.instance.js';
 import { roomManager } from '../core/rooms/room.manager.js';
-import { logDataChange } from '../utils/wsLogger.js';
+import { logDataChange, logAction } from '../utils/wsLogger.js';
 import { applyPatchOps } from '../utils/patchHelper.js';
 import { AuthError } from '../utils/errors.js';
 
 const registerCharacterHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
 
-    socket.on('character:updateData', async ({ id, ops }) => {
+    socket.on('character:updateData', async ({ id, ops, message }) => {
         try {
             const character_ = await getCharacter(id)
             const room = roomManager.get(character_.session.toString())
@@ -31,7 +31,8 @@ const registerCharacterHandler = (io, socket) => {
                 event: 'character:updateData',
                 sessionId: character.session.toString(),
                 characterId: character.id,
-                diff
+                diff,
+                message: typeof message === 'string' ? message.slice(0, 500) : null
             })
 
             if (room) {
@@ -51,6 +52,17 @@ const registerCharacterHandler = (io, socket) => {
             socketErrorHandler(socket, error);
         }
     });
+
+    // Dice rolls don't change character data - they're private to the roller
+    // (per the request, not broadcast) and exist purely for the audit log, so
+    // this just records the client-built message under the roller's own
+    // session/character context, derived from their room membership.
+    socket.on('character:rollDice', ({ message } = {}) => {
+        logAction(socket, {
+            event: 'character:rollDice',
+            message: typeof message === 'string' ? message.slice(0, 500) : 'Персонаж кинув кубик'
+        })
+    })
 
     socket.on('character:updateDataNotify', async (characterId) => {
         try {
