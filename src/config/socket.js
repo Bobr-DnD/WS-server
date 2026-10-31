@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import registerRoomHandler from '../handlers/room.handler.js';
 import registerSessionHandler from '../handlers/session.handler.js';
 import registerCharacterHandler from '../handlers/character.handler.js';
+import registerFightHandler from '../handlers/fight.handler.js';
 import fastifyInstance from '../core/fastify.instance.js';
 import { roomManager } from '../core/rooms/room.manager.js';
 import { RECONNECTION_GRACE_MS } from './socket.constants.js';
@@ -37,6 +38,7 @@ const createSocketServer = () => {
         registerRoomHandler(io, socket);
         registerSessionHandler(io, socket);
         registerCharacterHandler(io, socket);
+        registerFightHandler(io, socket);
     });
 
     return io;
