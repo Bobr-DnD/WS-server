@@ -4,8 +4,10 @@ import fastifyInstance from '../core/fastify.instance.js'
 
 const DEFAULT_UPDATE_MESSAGE = 'Оновлено дані персонажа'
 
-// These events are logged explicitly (with a computed diff or a built message)
-// by their handlers, so the generic onAny listener should not also log a raw duplicate.
+// Events the generic onAny listener should never raw-dump: most are logged
+// explicitly (with a computed diff or a built message) by their own handler
+// instead; session:connectCharacter/session:leave are intentionally not
+// logged at all - listed here purely to keep them silent.
 const DETAILED_EVENTS = new Set([
     'character:updateData',
     'character:rollDice',

@@ -36,13 +36,6 @@ const registerSessionHandler = (io, socket) => {
 
                     const sessionName = await getSessionName(sessionId);
                     fastify.log.info(`User pick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName}) (socketId: ${socket.id}, sessionId: ${sessionId}, characterId: ${characterId})`);
-
-                    logAction(socket, {
-                        event: 'session:connectCharacter',
-                        sessionId,
-                        characterId,
-                        message: 'Персонаж приєднався до сесії'
-                    })
                 }
             }
         } catch (error) {

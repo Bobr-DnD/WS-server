@@ -5,7 +5,6 @@ import { getSessionName } from '../service/session.service.js';
 import { getCharacterName } from '../service/character.service.js';
 import { RECONNECTION_GRACE_MS } from '../config/socket.constants.js';
 import { verifySessionToken } from '../utils/auth.js';
-import { logAction } from '../utils/wsLogger.js';
 
 const registerRoomHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
@@ -35,10 +34,6 @@ const registerRoomHandler = (io, socket) => {
     });
 
     socket.on('session:leave', (sessionId) => {
-        const leavingRoom = roomManager.get(sessionId);
-        const characterId = leavingRoom?.getCharacterBySocketId(socket.id) ?? null;
-        const role = leavingRoom?.members.get(socket.id)?.role ?? null;
-
         const session = roomManager.leave(socket.id, sessionId);
 
         socket.leave(sessionId);
@@ -50,14 +45,6 @@ const registerRoomHandler = (io, socket) => {
         }
 
         fastify.log.info(`User left session (socketId: ${socket.id}, sessionId: ${sessionId})`);
-
-        logAction(socket, {
-            event: 'session:leave',
-            sessionId,
-            characterId,
-            role,
-            message: 'Персонаж покинув сесію'
-        })
     });
 
     socket.on('session:reconnect', async (sessionId, { token, characterId }) => {
@@ -95,16 +82,6 @@ const registerRoomHandler = (io, socket) => {
     socket.on('disconnect', (reason) => {
         fastify.log.info(`User disconnected, scheduling room cleanup (socketId: ${socket.id}, reason: ${reason})`);
 
-        // leaveAll() (run inside scheduleLeaveAll's timer, before this callback)
-        // already deletes the member record from each room, so characterId/role
-        // must be captured now, before the grace period starts, not in the
-        // callback below.
-        const memberships = new Map();
-        roomManager.rooms.forEach((room, sessionId) => {
-            const member = room.members.get(socket.id);
-            if (member) memberships.set(sessionId, { characterId: member.userId ?? null, role: member.role ?? null });
-        });
-
         roomManager.scheduleLeaveAll(socket.id, RECONNECTION_GRACE_MS, (sessionIds) => {
             sessionIds.forEach((sessionId) => {
                 const session = roomManager.get(sessionId);
@@ -114,15 +91,6 @@ const registerRoomHandler = (io, socket) => {
                         room: session.toJSON()
                     });
                 }
-
-                const membership = memberships.get(sessionId);
-                logAction(socket, {
-                    event: 'session:leave',
-                    sessionId,
-                    characterId: membership?.characterId ?? null,
-                    role: membership?.role ?? null,
-                    message: "Персонаж покинув сесію (розірвано з'єднання)"
-                });
             });
 
             fastify.log.info(`User disconnected (socketId: ${socket.id})`);
