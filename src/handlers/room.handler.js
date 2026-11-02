@@ -4,12 +4,15 @@ import fastifyInstance from '../core/fastify.instance.js';
 import { getSessionName } from '../service/session.service.js';
 import { getCharacterName } from '../service/character.service.js';
 import { RECONNECTION_GRACE_MS } from '../config/socket.constants.js';
+import { verifySessionToken } from '../utils/auth.js';
 
 const registerRoomHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
 
-    socket.on('session:join', async (sessionId, { role }) => {
+    socket.on('session:join', async (sessionId, { token }) => {
         try {
+            const { role } = verifySessionToken(token, sessionId);
+
             const sessionName = await getSessionName(sessionId);
 
             const session = roomManager.join(socket.id, sessionId, role);
@@ -44,8 +47,10 @@ const registerRoomHandler = (io, socket) => {
         fastify.log.info(`User left session (socketId: ${socket.id}, sessionId: ${sessionId})`);
     });
 
-    socket.on('session:reconnect', async (sessionId, { role, characterId }) => {
+    socket.on('session:reconnect', async (sessionId, { token, characterId }) => {
         try {
+            const { role } = verifySessionToken(token, sessionId);
+
             const sessionName = await getSessionName(sessionId);
 
             const session = roomManager.getOrCreate(sessionId);

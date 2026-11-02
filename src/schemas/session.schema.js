@@ -22,6 +22,12 @@ const sessionSchema = new mongoose.Schema({
         select: false,
         required: [true, 'Session should have a password']
     },
+    adminPassword: {
+        type: String,
+        minLength: 8,
+        select: false,
+        required: [true, 'Session should have an admin password']
+    },
     customFields: {
         type: [customField],
         default: []
