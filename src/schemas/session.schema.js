@@ -4,6 +4,7 @@ import iconType from "../schemasTypes/typeWithIcon.schema.js";
 import colorType from "../schemasTypes/typeWithColor.schema.js"
 import nameType from "../schemasTypes/TypeWithName.schema.js"
 import customField from "../schemasTypes/customField.schema.js";
+import themeSchema from "../schemasTypes/theme.schema.js";
 
 const sessionSchema = new mongoose.Schema({
     name: {
@@ -74,6 +75,10 @@ const sessionSchema = new mongoose.Schema({
     },
     loadoutsLimit: {
         type: loadoutLimitsSchema,
+        default: () => ({})
+    },
+    theme: {
+        type: themeSchema,
         default: () => ({})
     }
 }, {
