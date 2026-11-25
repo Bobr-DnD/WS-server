@@ -14,10 +14,7 @@ const DETAILED_EVENTS = new Set([
     'session:connectCharacter',
     'session:disconnectCharacter',
     'session:leave',
-    'fight:move',
-    'fight:readyAttack',
-    'fight:resolveAttack',
-    'fight:newRound'
+    'fight:move'
 ])
 
 // Logging must never sit in the critical path of a character/session update -

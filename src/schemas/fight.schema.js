@@ -1,7 +1,5 @@
 import mongoose from 'mongoose'
 import fightOverlaySchema from '../schemasTypes/fightOverlay.schema.js'
-import fightTileSchema from '../schemasTypes/fightTile.schema.js'
-import fightCostSchema from '../schemasTypes/fightCost.schema.js'
 import fightEnemySchema from '../schemasTypes/fightEnemy.schema.js'
 import fightParticipantSchema from '../schemasTypes/fightParticipant.schema.js'
 
@@ -28,23 +26,6 @@ const fightSchema = new mongoose.Schema({
     overlay: {
         type: fightOverlaySchema,
         default: () => ({})
-    },
-    tiles: {
-        type: [fightTileSchema],
-        default: []
-    },
-    actionPoints: {
-        type: fightCostSchema,
-        default: () => ({ source: 'fixed', fixedAmount: 3 })
-    },
-    attackCost: {
-        type: fightCostSchema,
-        default: () => ({ source: 'fixed', fixedAmount: 1 })
-    },
-    weaponDamageFieldName: {
-        type: String,
-        trim: true,
-        default: 'damageDice'
     },
     enemies: {
         type: [fightEnemySchema],

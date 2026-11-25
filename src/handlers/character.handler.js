@@ -53,20 +53,15 @@ const registerCharacterHandler = (io, socket) => {
         }
     });
 
-    // Dice rolls don't change character data, but they are public - everyone
-    // in the roller's session sees the result live, not just the audit log.
+    // Dice rolls don't change character data - they're private to the roller
+    // (not broadcast) and exist purely for the audit log, so this just
+    // records the client-built message under the roller's own session/
+    // character context, derived from their room membership.
     socket.on('character:rollDice', ({ message } = {}) => {
-        const safeMessage = typeof message === 'string' ? message.slice(0, 500) : 'Персонаж кинув кубик'
-
         logAction(socket, {
             event: 'character:rollDice',
-            message: safeMessage
+            message: typeof message === 'string' ? message.slice(0, 500) : 'Персонаж кинув кубик'
         })
-
-        const sessionId = [...socket.rooms].find((room) => room !== socket.id)
-        if (sessionId) {
-            io.to(sessionId).emit('character:rollDiceNotify', { message: safeMessage })
-        }
     })
 
     socket.on('character:updateDataNotify', async (characterId) => {
