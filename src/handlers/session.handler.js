@@ -8,24 +8,34 @@ import { logAction } from '../utils/wsLogger.js';
 const registerSessionHandler = (io, socket) => {
     const fastify = fastifyInstance.server;
 
-    socket.on('session:connectCharacter', async (sessionId, characterId) => {
+    // `callback` is an optional socket.io ack - the connect involves an await
+    // (getSessionCharactersIds) before the member's userId is actually set,
+    // so a caller that immediately depends on that userId being set (e.g.
+    // the fight page joining right after connecting the character) needs a
+    // way to know the connect has actually landed, not just been sent.
+    socket.on('session:connectCharacter', async (sessionId, characterId, callback) => {
         const session = roomManager.get(sessionId);
         if (!session) {
             socket.emit('error', { message: `Session with id ${sessionId} not found` });
+            if (typeof callback === 'function') callback({ ok: false });
             return;
         }
 
         if (!session.hasMember(socket.id)) {
             socket.emit('error', { message: `User with id ${socket.id} is not in session ${sessionId}` });
+            if (typeof callback === 'function') callback({ ok: false });
             return;
         }
 
         try {
             const characters = await getSessionCharactersIds(sessionId);
             const sessionCharacterIds = characters.map(String);
+            let connected = false;
+
             if (sessionCharacterIds.includes(characterId)) {
                 const session = roomManager.connectCharacterToMember(socket.id, sessionId, characterId);
                 if (session) {
+                    connected = true;
                     io.to(sessionId).emit('session:update', {
                         room: session.toJSON()
                     });
@@ -38,8 +48,11 @@ const registerSessionHandler = (io, socket) => {
                     fastify.log.info(`User pick character ${characterName ? `(${characterName})` : 'unknown character'} in session (${sessionName}) (socketId: ${socket.id}, sessionId: ${sessionId}, characterId: ${characterId})`);
                 }
             }
+
+            if (typeof callback === 'function') callback({ ok: connected });
         } catch (error) {
             socketErrorHandler(socket, error);
+            if (typeof callback === 'function') callback({ ok: false });
         }
     });
 

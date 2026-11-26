@@ -24,14 +24,27 @@ const registerFightHandler = (io, socket) => {
         });
     }
 
-    socket.on('fight:join', async (sessionId) => {
+    // A specific fightId (admin only - the GM live view at
+    // /admin/:sessionId/fight/:fightId/live) pins the join to that exact
+    // fight regardless of which one is flagged active, so board edits always
+    // target the fight the admin actually opened. Players never pass one -
+    // they always see the session's current active fight.
+    socket.on('fight:join', async ({ sessionId, fightId } = {}) => {
         try {
             const { member } = getMember(sessionId);
             if (!member) throw new AuthError('Not a member of this session');
 
-            let fight = await fightService.getActiveFight(sessionId);
+            let fight = (fightId && member.role === 'admin')
+                ? await fightService.getFight(fightId)
+                : await fightService.getActiveFight(sessionId);
 
-            if (fight && member.role !== 'admin' && member.userId) {
+            // Gated on whether a character is actually connected to this
+            // socket, not on session role - an admin previewing/acting
+            // through a player-bound route (character still gets connected
+            // via session:connectCharacter there) should still get tracked
+            // as a participant. Role only governs what gets filtered out of
+            // the response below, not whether this socket is "playing" one.
+            if (fight && member.userId) {
                 fight = await fightService.ensureParticipant(fight.id, member.userId);
             }
 
@@ -41,12 +54,18 @@ const registerFightHandler = (io, socket) => {
         }
     });
 
-    // Admin-only - the map is a board the GM arranges, not something players
-    // move their own token on.
+    // Admin can freely reposition anything (enemies or any character) - a
+    // player can only reposition their own connected character token, never
+    // an enemy or someone else's.
     socket.on('fight:move', async ({ sessionId, fightId, targetType, targetId, tileId }) => {
         try {
             const { room, member } = getMember(sessionId);
-            if (member?.role !== 'admin') throw new AuthError('Admin access required');
+            if (!member) throw new AuthError('Not a member of this session');
+
+            const isAdmin = member.role === 'admin';
+            const isOwnCharacter = targetType === 'character' && member.userId === targetId;
+
+            if (!isAdmin && !isOwnCharacter) throw new AuthError('Not authorized to move this token');
 
             const fight = await fightService.moveToken({ fightId, targetType, targetId, tileId });
             broadcastFight(room, fight);
@@ -54,7 +73,8 @@ const registerFightHandler = (io, socket) => {
             logAction(socket, {
                 event: 'fight:move',
                 sessionId,
-                role: 'admin',
+                characterId: targetType === 'character' ? targetId : null,
+                role: member.role,
                 message: targetType === 'enemy' ? 'Ворога переміщено на карті' : 'Персонажа переміщено на карті'
             });
         } catch (error) {
