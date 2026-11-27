@@ -21,10 +21,13 @@ function findParticipant(fight, characterId) {
 // Adds a participant entry the first time a character shows up in the
 // currently active fight - position defaults to the overlay's center tile,
 // same as a freshly-created enemy would if an admin hasn't moved it yet.
+// `added` tells the caller whether this actually changed the fight (so it
+// knows whether the rest of the room needs to be told) vs. the character
+// already being a participant (a no-op re-join).
 export const ensureParticipant = async (fightId, characterId) => {
     const fight = await getFight(fightId)
 
-    if (findParticipant(fight, characterId)) return fight
+    if (findParticipant(fight, characterId)) return { fight, added: false }
 
     // Confirms the character actually exists before wiring it into the fight.
     await getCharacter(characterId)
@@ -35,7 +38,7 @@ export const ensureParticipant = async (fightId, characterId) => {
     })
 
     await fight.save()
-    return fight
+    return { fight, added: true }
 }
 
 // Free-form repositioning, admin only - no AP, no path validation. The map

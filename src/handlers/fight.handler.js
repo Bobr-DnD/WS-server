@@ -29,10 +29,20 @@ const registerFightHandler = (io, socket) => {
     // fight regardless of which one is flagged active, so board edits always
     // target the fight the admin actually opened. Players never pass one -
     // they always see the session's current active fight.
-    socket.on('fight:join', async ({ sessionId, fightId } = {}) => {
+    // `callback` is an optional ack - a fresh page load races session:join
+    // (done by the parent view) also needing to finish registering this
+    // socket as a room member first, so "not a member yet" here is an
+    // expected, self-healing startup race, not a real failure. The caller
+    // retries on ok:false instead of this hanging forever on a single
+    // mistimed attempt or surfacing a scary error for something that
+    // resolves itself moments later.
+    socket.on('fight:join', async ({ sessionId, fightId } = {}, callback) => {
         try {
-            const { member } = getMember(sessionId);
-            if (!member) throw new AuthError('Not a member of this session');
+            const { room, member } = getMember(sessionId);
+            if (!member) {
+                if (typeof callback === 'function') callback({ ok: false });
+                return;
+            }
 
             let fight = (fightId && member.role === 'admin')
                 ? await fightService.getFight(fightId)
@@ -45,12 +55,22 @@ const registerFightHandler = (io, socket) => {
             // as a participant. Role only governs what gets filtered out of
             // the response below, not whether this socket is "playing" one.
             if (fight && member.userId) {
-                fight = await fightService.ensureParticipant(fight.id, member.userId);
+                const result = await fightService.ensureParticipant(fight.id, member.userId);
+                fight = result.fight;
+
+                // A brand-new participant changes what everyone else in the
+                // room should be seeing (GM's roster, other players' map) -
+                // without this, only the joining socket's own response
+                // reflects it, and everyone else is stuck on stale data
+                // until some unrelated action happens to broadcast next.
+                if (result.added) broadcastFight(room, fight);
             }
 
             socket.emit('fight:join', fight ? (member.role === 'admin' ? fight : toPlayerFight(fight)) : null);
+            if (typeof callback === 'function') callback({ ok: true });
         } catch (error) {
             socketErrorHandler(socket, error);
+            if (typeof callback === 'function') callback({ ok: false });
         }
     });
 

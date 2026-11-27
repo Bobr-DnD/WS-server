@@ -13,16 +13,19 @@ const registerSessionHandler = (io, socket) => {
     // so a caller that immediately depends on that userId being set (e.g.
     // the fight page joining right after connecting the character) needs a
     // way to know the connect has actually landed, not just been sent.
+    //
+    // Neither early-return below emits a visible 'error' toast - a fresh
+    // page load racing session:join (room membership not registered yet) is
+    // an expected, self-healing startup condition the caller retries via the
+    // ack, not a real problem worth alarming the user about on every attempt.
     socket.on('session:connectCharacter', async (sessionId, characterId, callback) => {
         const session = roomManager.get(sessionId);
         if (!session) {
-            socket.emit('error', { message: `Session with id ${sessionId} not found` });
             if (typeof callback === 'function') callback({ ok: false });
             return;
         }
 
         if (!session.hasMember(socket.id)) {
-            socket.emit('error', { message: `User with id ${socket.id} is not in session ${sessionId}` });
             if (typeof callback === 'function') callback({ ok: false });
             return;
         }
